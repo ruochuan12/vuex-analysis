@@ -1,4 +1,8 @@
-# vuex
+# 学习 vuex 源码整体架构
+
+## chrome 浏览器调试方法
+
+[在 VS Code 中调试Vue](https://cn.vuejs.org/v2/cookbook/debugging-in-vscode.html)
 
 ## vuex 文件夹
 
@@ -6,7 +10,7 @@
 `dev`分支的代码。
 当前版本是`v3.1.1`。
 
-## Vue.use
+## Vue.use 安装
 
 [文档 Vue.use](https://cn.vuejs.org/v2/api/#Vue-use)
 Vue.use(Vuex)
@@ -40,6 +44,10 @@ function initUse (Vue) {
 }
 ```
 
+### install
+
+`vuex/src/store.js`
+
 ```js
 export function install (_Vue) {
   if (Vue && _Vue === Vue) {
@@ -55,11 +63,18 @@ export function install (_Vue) {
 }
 ```
 
+### applyMixin
+
+`vuex/src/mixin.js`
+
 ```js
 export default function (Vue) {
   const version = Number(Vue.version.split('.')[0])
 
   if (version >= 2) {
+    // 合并选项后 beforeCreate 是数组里函数的形式  [func,  func]
+    // 最后调用循环遍历这个数组，调用这些函数，这是一种函数与函数合并的解决方案。
+    // 假设是我们自己来设计，会是什么方案呢。
     Vue.mixin({ beforeCreate: vuexInit })
   } else {
     // override init and inject vuex init procedure
@@ -90,7 +105,6 @@ export default function (Vue) {
   }
 }
 ```
-
 
 ## 细节点
 
@@ -124,18 +138,15 @@ function proxy (target, sourceKey, key) {
 }
 ```
 
-## chrome 浏览器调试方法
-
-[在 VS Code 中调试Vue](https://cn.vuejs.org/v2/cookbook/debugging-in-vscode.html)
 
 ## 推荐阅读
 
-[知乎黄轶：Vuex 2.0 源码分析](https://zhuanlan.zhihu.com/p/23921964)
-[yck：Vuex 源码深度解析](https://yuchengkai.cn/blog/2018-07-31.html)
-[美团明裔：Vuex框架原理与源码分析](https://tech.meituan.com/2017/04/27/vuex-code-analysis.html)
-[vuex github 仓库](https://github.com/vuejs/vuex)
-[vuex 官方文档](https://vuex.vuejs.org/zh/)
-[网易考拉前端团队：Vuex 源码分析](https://juejin.im/post/59b88e2e6fb9a00a4f1b0a0b#heading-8)
-[小虫巨蟹：Vuex 源码解析（如何阅读源代码实践篇）](https://juejin.im/post/5962c13c6fb9a06b9e11a6a9)
-[染陌：Vuex 源码解析](https://juejin.im/post/59f66bd7f265da432d275d30)
-[小生方勤：【前端词典】从源码解读 Vuex 注入 Vue 生命周期的过程](https://juejin.im/post/5cb30243e51d456e431ada29)
+[vuex github 仓库](https://github.com/vuejs/vuex)<br/>
+[vuex 官方文档](https://vuex.vuejs.org/zh/)<br/>
+[知乎黄轶：Vuex 2.0 源码分析](https://zhuanlan.zhihu.com/p/23921964)<br/>
+[美团明裔：Vuex框架原理与源码分析](https://tech.meituan.com/2017/04/27/vuex-code-analysis.html)<br/>
+[yck：Vuex 源码深度解析](https://yuchengkai.cn/blog/2018-07-31.html)<br/>
+[网易考拉前端团队：Vuex 源码分析](https://juejin.im/post/59b88e2e6fb9a00a4f1b0a0b#heading-8)<br/>
+[小虫巨蟹：Vuex 源码解析（如何阅读源代码实践篇）](https://juejin.im/post/5962c13c6fb9a06b9e11a6a9)<br/>
+[染陌：Vuex 源码解析](https://juejin.im/post/59f66bd7f265da432d275d30)<br/>
+[小生方勤：【前端词典】从源码解读 Vuex 注入 Vue 生命周期的过程](https://juejin.im/post/5cb30243e51d456e431ada29)<br/>
