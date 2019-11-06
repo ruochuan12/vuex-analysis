@@ -61,10 +61,13 @@ export function isPromise (val) {
   return val && typeof val.then === 'function'
 }
 
+// 条件 断言 不满足直接抛出错误
 export function assert (condition, msg) {
   if (!condition) throw new Error(`[vuex] ${msg}`)
 }
 
+//  underscore.js 源码中也有这个类似函数 _.partial
+// 返回一个新函数
 export function partial (fn, arg) {
   return function () {
     return fn(arg)

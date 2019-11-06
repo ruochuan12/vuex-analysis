@@ -10,13 +10,19 @@ export class Store {
     // Auto install if it is not done yet and `window` has `Vue`.
     // To allow users to avoid auto-installation in some cases,
     // this code should be placed here. See #731
+    // 如果是 cdn script 引入vuex插件，则自动安装vuex插件，不需要用Vue.use(Vuex)来安装
     if (!Vue && typeof window !== 'undefined' && window.Vue) {
       install(window.Vue)
     }
 
+    // 不是生产环境
+    // 断言
     if (process.env.NODE_ENV !== 'production') {
+      // 必须使用Vue.use(Vuex) 创建 store 实例
       assert(Vue, `must call Vue.use(Vuex) before creating a store instance.`)
+      // vuex需要promise polyfill
       assert(typeof Promise !== 'undefined', `vuex requires a Promise polyfill in this browser.`)
+      // Store 函数必须使用new操作符调用
       assert(this instanceof Store, `store must be called with the new operator.`)
     }
 
@@ -26,19 +32,25 @@ export class Store {
     } = options
 
     // store internal state
+    // store实例 内部的 state
     this._committing = false
     this._actions = Object.create(null)
     this._actionSubscribers = []
     this._mutations = Object.create(null)
     this._wrappedGetters = Object.create(null)
+    // 模块收集器
     this._modules = new ModuleCollection(options)
     this._modulesNamespaceMap = Object.create(null)
     this._subscribers = []
     this._watcherVM = new Vue()
 
     // bind commit and dispatch to self
+    // 给自己 绑定 commit 和 dispatch
     const store = this
     const { dispatch, commit } = this
+    // 为何要这样绑定 ?
+    // 说明调用commit和dispach 的 this 不一定是 store 实例
+    // 这是确保这两个函数里的this是store实例
     this.dispatch = function boundDispatch (type, payload) {
       return dispatch.call(store, type, payload)
     }
@@ -47,22 +59,31 @@ export class Store {
     }
 
     // strict mode
+    // 严格模式，默认是false
     this.strict = strict
 
+    // 根模块的state
     const state = this._modules.root.state
 
     // init root module.
     // this also recursively registers all sub-modules
     // and collects all module getters inside this._wrappedGetters
+    // 初始化 根模块
+    // 并且也递归的注册所有子模块
+    // 并且收集所有模块的 getters 放在 this._wrappedGetters 里面
     installModule(this, state, [], this._modules.root)
 
     // initialize the store vm, which is responsible for the reactivity
     // (also registers _wrappedGetters as computed properties)
+    // 初始化 store._vm 响应式的
+    // 并且注册 _wrappedGetters 作为 computed 的属性
     resetStoreVM(this, state)
 
     // apply plugins
+    // 执行所有插件
     plugins.forEach(plugin => plugin(this))
 
+    // 初始化 vue-devtool 开发工具
     const useDevtools = options.devtools !== undefined ? options.devtools : Vue.config.devtools
     if (useDevtools) {
       devtoolPlugin(this)
