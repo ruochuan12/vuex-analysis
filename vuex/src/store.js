@@ -16,7 +16,14 @@ export class Store {
     }
 
     // 不是生产环境
-    // 断言
+    // 断言函数
+    /**
+     * 条件 断言 不满足直接抛出错误
+      export function assert (condition, msg) {
+        if (!condition) throw new Error(`[vuex] ${msg}`)
+      }
+     * 
+     */ 
     if (process.env.NODE_ENV !== 'production') {
       // 必须使用Vue.use(Vuex) 创建 store 实例
       assert(Vue, `must call Vue.use(Vuex) before creating a store instance.`)
@@ -80,7 +87,7 @@ export class Store {
     resetStoreVM(this, state)
 
     // apply plugins
-    // 执行所有插件
+    // 把实例store传给插件函数，执行所有插件
     plugins.forEach(plugin => plugin(this))
 
     // 初始化 vue-devtool 开发工具
