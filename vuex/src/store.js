@@ -91,6 +91,7 @@ export class Store {
     plugins.forEach(plugin => plugin(this))
 
     // 初始化 vue-devtool 开发工具
+    // 参数 devtools 传递了取 devtools 否则取Vue.config.devtools 配置
     const useDevtools = options.devtools !== undefined ? options.devtools : Vue.config.devtools
     if (useDevtools) {
       devtoolPlugin(this)
@@ -101,6 +102,7 @@ export class Store {
     return this._vm._data.$$state
   }
 
+  // 设置 state 非生产环境报错
   set state (v) {
     if (process.env.NODE_ENV !== 'production') {
       assert(false, `use store.replaceState() to explicit replace store state.`)
@@ -285,7 +287,7 @@ function resetStoreVM (store, state, hot) {
   forEachValue(wrappedGetters, (fn, key) => {
     // use computed to leverage its lazy-caching mechanism
     // direct inline function use will lead to closure preserving oldVm.
-    // using partial to return function with only arguments preserved in closure enviroment.
+    // using partial to return function with only arguments preserved in closure environment.
     computed[key] = partial(fn, store)
     Object.defineProperty(store.getters, key, {
       get: () => store._vm[key],
@@ -307,6 +309,8 @@ function resetStoreVM (store, state, hot) {
   Vue.config.silent = silent
 
   // enable strict mode for new vm
+  // 开启严格模式 执行这句
+  // 用$watch 观测 state
   if (store.strict) {
     enableStrictMode(store)
   }
@@ -510,6 +514,7 @@ function getNestedState (state, path) {
     : state
 }
 
+// 统一对象风格
 function unifyObjectStyle (type, payload, options) {
   if (isObject(type) && type.type) {
     options = payload
