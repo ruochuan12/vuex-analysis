@@ -1,5 +1,19 @@
 # 学习 vuex 源码整体架构
 
+## 前言
+
+>这是学习源码整体架构第五篇。整体架构这词语好像有点大，姑且就算是源码整体结构吧，主要就是学习是代码整体结构，不深究其他不是主线的具体函数的实现。本篇文章学习的是实际仓库的代码。
+
+其余四篇分别是：
+>1.[学习 jQuery 源码整体架构，打造属于自己的 js 类库](https://juejin.im/post/5d39d2cbf265da1bc23fbd42)<br/>
+>2.[学习 underscore 源码整体架构，打造属于自己的函数式编程类库](https://juejin.im/post/5d4bf94de51d453bb13b65dc)<br/>
+>3.[学习 lodash 源码整体架构，打造属于自己的函数式编程类库](https://juejin.im/post/5d767e1d6fb9a06b032025ea)<br/>
+>4.[学习 sentry 源码整体架构，打造属于自己的前端异常监控SDK](https://juejin.im/post/5dba5a39e51d452a2378348a)<br/>
+
+感兴趣的读者可以点击阅读。
+
+**导读**<br/>
+
 ## chrome 浏览器调试 vuex 源码方法
 
 [Vue文档：在 VS Code 中调试Vue](https://cn.vuejs.org/v2/cookbook/debugging-in-vscode.html)<br/>
