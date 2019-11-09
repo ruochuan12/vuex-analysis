@@ -1,14 +1,35 @@
 # 学习 vuex 源码整体架构
 
-## chrome 浏览器调试方法
+## chrome 浏览器调试 vuex 源码方法
 
-[在 VS Code 中调试Vue](https://cn.vuejs.org/v2/cookbook/debugging-in-vscode.html)
+[Vue文档：在 VS Code 中调试Vue](https://cn.vuejs.org/v2/cookbook/debugging-in-vscode.html)<br/>
+从上文中同理可得调试 `vuex` 方法，这里详细说下，便于帮助到可能不知道如何调试源码的读者。<br/>
+可以把我的这个 [vuex-analysis](https://github.com/lxchuan12/vuex-analysis) 源码分析仓库`fork`一份或者直接克隆下来，
+`git clone https://github.com/lxchuan12/vuex-analysis.git`
+>
+>其中文件夹`vuex`，是克隆官方的`vuex`仓库 `dev`分支。<br/>
+>`git clone https://github.com/vuejs/vuex.git` <br/>
+TODO:  修改时间和commit<br/>
+>截至目前（2019年11月），版本是`v3.1.1`，最新一次commit是`540b81f`，`2019-11-09 16:45 Sai`。<br/>
+>包含我的注释，便于理解。<br/>
 
-## vuex 文件夹
+克隆完成后， 在`vuex/examples/webpack.config.js` 中添加`devtool`配置。
+```js
+// 新增devtool配置，便于调试
+devtool: 'source-map',
+output: {}
+```
 
-`git clone https://github.com/vuejs/vuex.git` 
-`dev`分支的代码。
-当前版本是`v3.1.1`。
+```bash
+cd vuex
+npm i
+npm run dev
+# 打开localhost:8080
+# 点击你想打开的例子，例如：Shopping Cart
+# 打开控制面板 source 在左侧找到 webapck//      .    src 目录 store文件 根据自己需求断点调试即可。
+```
+
+正文开始～
 
 ## Vue.use 安装
 
@@ -106,6 +127,72 @@ export default function (Vue) {
 }
 ```
 
+
+## store
+
+### 构造函数
+
+
+## Vuex.Store 实例方法
+
+### commit
+
+提交 mutation。
+
+### dispatch
+
+分发 action。
+
+### replaceState
+
+替换 store 的根状态，仅用状态合并或时光旅行调试。
+
+### watch
+
+响应式地侦听 fn 的返回值，当值改变时调用回调函数。
+
+### subscribe
+
+订阅 store 的 mutation。
+
+### subscribeAction
+
+订阅 store 的 action。
+
+### registerModule
+
+注册一个动态模块。
+
+### unregisterModule
+
+卸载一个动态模块。
+
+### hotUpdate
+
+热替换新的 action 和 mutation。
+
+## 组件绑定的辅助函数
+
+### mapState
+
+为组件创建计算属性以返回 Vuex store 中的状态。
+
+### mapGetters
+
+为组件创建计算属性以返回 getter 的返回值。
+
+### mapActions
+
+创建组件方法分发 action。
+
+### mapMutations
+
+创建组件方法提交 mutation。
+
+### createNamespacedHelpers
+
+创建基于命名空间的组件绑定辅助函数。
+
 ## 细节点
 
 ### isReserved proxy
@@ -138,15 +225,20 @@ function proxy (target, sourceKey, key) {
 }
 ```
 
+## 插件
+
+### devtool
+
+### logger
 
 ## 推荐阅读
 
-[vuex github 仓库](https://github.com/vuejs/vuex)<br/>
 [vuex 官方文档](https://vuex.vuejs.org/zh/)<br/>
-[知乎黄轶：Vuex 2.0 源码分析](https://zhuanlan.zhihu.com/p/23921964)<br/>
+[vuex github 仓库](https://github.com/vuejs/vuex)<br/>
 [美团明裔：Vuex框架原理与源码分析](https://tech.meituan.com/2017/04/27/vuex-code-analysis.html)<br/>
-[yck：Vuex 源码深度解析](https://yuchengkai.cn/blog/2018-07-31.html)<br/>
-[网易考拉前端团队：Vuex 源码分析](https://juejin.im/post/59b88e2e6fb9a00a4f1b0a0b#heading-8)<br/>
-[小虫巨蟹：Vuex 源码解析（如何阅读源代码实践篇）](https://juejin.im/post/5962c13c6fb9a06b9e11a6a9)<br/>
+[知乎黄轶：Vuex 2.0 源码分析](https://zhuanlan.zhihu.com/p/23921964)<br/>
 [染陌：Vuex 源码解析](https://juejin.im/post/59f66bd7f265da432d275d30)<br/>
+[网易考拉前端团队：Vuex 源码分析](https://juejin.im/post/59b88e2e6fb9a00a4f1b0a0b#heading-8)<br/>
+[yck：Vuex 源码深度解析](https://yuchengkai.cn/blog/2018-07-31.html)<br/>
+[小虫巨蟹：Vuex 源码解析（如何阅读源代码实践篇）](https://juejin.im/post/5962c13c6fb9a06b9e11a6a9)<br/>
 [小生方勤：【前端词典】从源码解读 Vuex 注入 Vue 生命周期的过程](https://juejin.im/post/5cb30243e51d456e431ada29)<br/>
