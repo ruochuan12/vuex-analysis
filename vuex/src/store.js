@@ -50,6 +50,7 @@ export class Store {
     this._modulesNamespaceMap = Object.create(null)
     this._subscribers = []
     this._watcherVM = new Vue()
+    this._makeLocalGettersCache = Object.create(null)
 
     // bind commit and dispatch to self
     // 给自己 绑定 commit 和 dispatch
@@ -282,6 +283,8 @@ function resetStoreVM (store, state, hot) {
 
   // bind store public getters
   store.getters = {}
+  // reset local getters cache
+  store._makeLocalGettersCache = Object.create(null)
   const wrappedGetters = store._wrappedGetters
   const computed = {}
   forEachValue(wrappedGetters, (fn, key) => {
@@ -344,6 +347,13 @@ function installModule (store, rootState, path, module, hot) {
     const parentState = getNestedState(rootState, path.slice(0, -1))
     const moduleName = path[path.length - 1]
     store._withCommit(() => {
+      if (process.env.NODE_ENV !== 'production') {
+        if (moduleName in parentState) {
+          console.warn(
+            `[vuex] state field "${moduleName}" was overridden by a module with the same name at "${path.join('.')}"`
+          )
+        }
+      }
       Vue.set(parentState, moduleName, module.state)
     })
   }
@@ -429,26 +439,28 @@ function makeLocalContext (store, namespace, path) {
 }
 
 function makeLocalGetters (store, namespace) {
-  const gettersProxy = {}
+  if (!store._makeLocalGettersCache[namespace]) {
+    const gettersProxy = {}
+    const splitPos = namespace.length
+    Object.keys(store.getters).forEach(type => {
+      // skip if the target getter is not match this namespace
+      if (type.slice(0, splitPos) !== namespace) return
 
-  const splitPos = namespace.length
-  Object.keys(store.getters).forEach(type => {
-    // skip if the target getter is not match this namespace
-    if (type.slice(0, splitPos) !== namespace) return
+      // extract local getter type
+      const localType = type.slice(splitPos)
 
-    // extract local getter type
-    const localType = type.slice(splitPos)
-
-    // Add a port to the getters proxy.
-    // Define as getter property because
-    // we do not want to evaluate the getters in this time.
-    Object.defineProperty(gettersProxy, localType, {
-      get: () => store.getters[type],
-      enumerable: true
+      // Add a port to the getters proxy.
+      // Define as getter property because
+      // we do not want to evaluate the getters in this time.
+      Object.defineProperty(gettersProxy, localType, {
+        get: () => store.getters[type],
+        enumerable: true
+      })
     })
-  })
+    store._makeLocalGettersCache[namespace] = gettersProxy
+  }
 
-  return gettersProxy
+  return store._makeLocalGettersCache[namespace]
 }
 
 function registerMutation (store, type, handler, local) {
@@ -460,7 +472,7 @@ function registerMutation (store, type, handler, local) {
 
 function registerAction (store, type, handler, local) {
   const entry = store._actions[type] || (store._actions[type] = [])
-  entry.push(function wrappedActionHandler (payload, cb) {
+  entry.push(function wrappedActionHandler (payload) {
     let res = handler.call(store, {
       dispatch: local.dispatch,
       commit: local.commit,
@@ -468,7 +480,7 @@ function registerAction (store, type, handler, local) {
       state: local.state,
       rootGetters: store.getters,
       rootState: store.state
-    }, payload, cb)
+    }, payload)
     if (!isPromise(res)) {
       res = Promise.resolve(res)
     }
