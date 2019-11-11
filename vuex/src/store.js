@@ -499,7 +499,8 @@ function registerGetter (store, type, rawGetter, local) {
     )
   }
 }
-
+// 深度监控state的变化，
+// 如果 state 不是通过 this._withCommit() 方法修改，则报错。
 function enableStrictMode (store) {
   store._vm.$watch(function () { return this._data.$$state }, () => {
     if (process.env.NODE_ENV !== 'production') {
@@ -508,6 +509,7 @@ function enableStrictMode (store) {
   }, { deep: true, sync: true })
 }
 
+// 根据路径来获取嵌套的state
 function getNestedState (state, path) {
   return path.length
     ? path.reduce((state, key) => state[key], state)
