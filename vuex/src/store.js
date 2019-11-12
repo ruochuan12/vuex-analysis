@@ -47,8 +47,10 @@ export class Store {
     this._wrappedGetters = Object.create(null)
     // 模块收集器
     this._modules = new ModuleCollection(options)
+    // 用于存储模块命名空间的关系
     this._modulesNamespaceMap = Object.create(null)
     this._subscribers = []
+    // 用于使用 $watch 观测 getters
     this._watcherVM = new Vue()
     this._makeLocalGettersCache = Object.create(null)
 
@@ -544,6 +546,7 @@ function unifyObjectStyle (type, payload, options) {
 }
 
 export function install (_Vue) {
+  // Vue 已经存在并且相等，说明已经Vuex.use过
   if (Vue && _Vue === Vue) {
     if (process.env.NODE_ENV !== 'production') {
       console.error(
