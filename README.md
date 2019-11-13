@@ -45,6 +45,39 @@ npm run dev
 
 正文开始～
 
+## vuex 原理
+
+简单说明下 vuex 原理
+
+```js
+<template>
+<div>
+  count {{$store.state.count}}
+</div>
+</template>
+```
+
+每个组件（也就是`Vue实例`）都混入 同一个`Store实例` 作为属性 `$store`，
+也就是为啥可以通过this.$store.dispatch等调用方法的原因。
+
+最后显示在模板里的
+`$store.state.count`
+其实是：
+`vm.$store._vm._data.$$state.count`
+其中`vm.$store._vm._data.$$state` 是 响应式的。
+怎么实现响应式的？其实就是`new Vue()`
+
+```js
+store._vm = new Vue({
+  data: {
+    $$state: state
+  },
+  computed
+})
+```
+
+而 `Store.prototype`上的一些函数（API）主要都是围绕修改`vm.$store._vm._data.$$state`服务的。
+
 ## Vue.use 安装
 
 [文档 Vue.use](https://cn.vuejs.org/v2/api/#Vue-use)
@@ -253,6 +286,6 @@ function proxy (target, sourceKey, key) {
 [知乎黄轶：Vuex 2.0 源码分析](https://zhuanlan.zhihu.com/p/23921964)<br/>
 [染陌：Vuex 源码解析](https://juejin.im/post/59f66bd7f265da432d275d30)<br/>
 [网易考拉前端团队：Vuex 源码分析](https://juejin.im/post/59b88e2e6fb9a00a4f1b0a0b#heading-8)<br/>
-[yck：Vuex 源码深度解析](https://yuchengkai.cn/blog/2018-07-31.html)<br/>
+[yck：Vuex 源码深度解析](https://juejin.im/post/5b8e3182e51d4538ae4dce87)<br/>
 [小虫巨蟹：Vuex 源码解析（如何阅读源代码实践篇）](https://juejin.im/post/5962c13c6fb9a06b9e11a6a9)<br/>
 [小生方勤：【前端词典】从源码解读 Vuex 注入 Vue 生命周期的过程](https://juejin.im/post/5cb30243e51d456e431ada29)<br/>
