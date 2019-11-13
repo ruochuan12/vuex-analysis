@@ -114,6 +114,17 @@ export class Store {
 
   commit (_type, _payload, _options) {
     // check object-style commit
+    // 统一对象风格
+    /**
+     * this.$store.commit('increment', {
+     *    count: 10
+     *  })
+     *  // 对象提交方式
+     *  this.$store.commit({
+     *    type: 'increment',
+     *    count: 10
+     *  })
+     */
     const {
       type,
       payload,
