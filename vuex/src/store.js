@@ -344,11 +344,15 @@ function resetStoreVM (store, state, hot) {
 }
 
 function installModule (store, rootState, path, module, hot) {
+  // 是根模块
   const isRoot = !path.length
+  // 命名空间
   const namespace = store._modules.getNamespace(path)
 
   // register in namespace map
+  // 注册在命名空间的map对象中。
   if (module.namespaced) {
+    // 模块命名空间map对象中已经有了，开发环境报错提示重复
     if (store._modulesNamespaceMap[namespace] && process.env.NODE_ENV !== 'production') {
       console.error(`[vuex] duplicate namespace ${namespace} for the namespaced module ${path.join('/')}`)
     }
@@ -356,6 +360,7 @@ function installModule (store, rootState, path, module, hot) {
   }
 
   // set state
+  // 不是根模块且不是热重载
   if (!isRoot && !hot) {
     const parentState = getNestedState(rootState, path.slice(0, -1))
     const moduleName = path[path.length - 1]
@@ -373,22 +378,26 @@ function installModule (store, rootState, path, module, hot) {
 
   const local = module.context = makeLocalContext(store, namespace, path)
 
+  // 循环注册mutation
   module.forEachMutation((mutation, key) => {
     const namespacedType = namespace + key
     registerMutation(store, namespacedType, mutation, local)
   })
 
+  // 循环注册action
   module.forEachAction((action, key) => {
     const type = action.root ? key : namespace + key
     const handler = action.handler || action
     registerAction(store, type, handler, local)
   })
 
+  // 循环注册getter
   module.forEachGetter((getter, key) => {
     const namespacedType = namespace + key
     registerGetter(store, namespacedType, getter, local)
   })
 
+  // 注册子模块
   module.forEachChild((child, key) => {
     installModule(store, rootState, path.concat(key), child, hot)
   })
