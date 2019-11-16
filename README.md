@@ -57,7 +57,7 @@ npm run dev
 </template>
 ```
 
-每个组件（也就是`Vue实例`）都混入 同一个`Store实例` 作为属性 `$store`，
+每个组件（也就是`Vue实例`）都混入（Vue.mixin） 同一个`Store实例` 作为属性 `$store`，
 也就是为啥可以通过this.$store.dispatch等调用方法的原因。
 
 最后显示在模板里的
@@ -76,6 +76,8 @@ store._vm = new Vue({
 })
 ```
 
+这里的 `state` 就是 用户定义的 `state`。
+这里的 `computed` 就是用户定义的 `getters`。
 而 `Store.prototype`上的一些函数（API）主要都是围绕修改`vm.$store._vm._data.$$state`服务的。
 
 ## Vue.use 安装
