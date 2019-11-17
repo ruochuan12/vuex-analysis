@@ -1,9 +1,12 @@
 import Module from './module'
 import { assert, forEachValue } from '../util'
 
+// 模块收集器 构造模块的树结构 放到 store实例的_modules这个变量中
 export default class ModuleCollection {
   constructor (rawRootModule) {
     // register root module (Vuex.Store options)
+    // 注册根模块 参数 rawRootModule 也就是 Vuex.Store 的 options 参数
+    // 未加工过的模块（用户自定义的），根模块
     this.register([], rawRootModule, false)
   }
 
