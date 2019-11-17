@@ -16,6 +16,7 @@ export default class ModuleCollection {
     }, this.root)
   }
 
+  // 获取命名空间，最后返回类似 'cart/'
   getNamespace (path) {
     let module = this.root
     return path.reduce((namespace, key) => {
@@ -24,10 +25,17 @@ export default class ModuleCollection {
     }, '')
   }
 
+  // 更新模块
   update (rawRootModule) {
     update([], this.root, rawRootModule)
   }
 
+  /**
+   * 注册模块
+   * @param {Array} path 路径
+   * @param {Object} rawModule 原始未加工的模块
+   * @param {Boolean} runtime runtime 默认是 true
+   */
   register (path, rawModule, runtime = true) {
     if (process.env.NODE_ENV !== 'production') {
       assertRawModule(path, rawModule)
@@ -49,6 +57,7 @@ export default class ModuleCollection {
     }
   }
 
+  // 注销模块
   unregister (path) {
     const parent = this.get(path.slice(0, -1))
     const key = path[path.length - 1]
@@ -58,6 +67,7 @@ export default class ModuleCollection {
   }
 }
 
+// 更新
 function update (path, targetModule, newModule) {
   if (process.env.NODE_ENV !== 'production') {
     assertRawModule(path, newModule)
@@ -86,24 +96,27 @@ function update (path, targetModule, newModule) {
     }
   }
 }
-
+// 必须是函数
 const functionAssert = {
   assert: value => typeof value === 'function',
   expected: 'function'
 }
 
+// 对象类型
 const objectAssert = {
   assert: value => typeof value === 'function' ||
     (typeof value === 'object' && typeof value.handler === 'function'),
   expected: 'function or object with "handler" function'
 }
 
+// 用户定义的模块类型
 const assertTypes = {
   getters: functionAssert,
   mutations: functionAssert,
   actions: objectAssert
 }
 
+// 断言未加工的模块，也就是校验用户定义的这些模块是否符合要求。
 function assertRawModule (path, rawModule) {
   Object.keys(assertTypes).forEach(key => {
     if (!rawModule[key]) return
@@ -119,6 +132,7 @@ function assertRawModule (path, rawModule) {
   })
 }
 
+// 生成断言提示消息
 function makeAssertionMessage (path, key, type, value, expected) {
   let buf = `${key} should be ${expected} but "${key}.${type}"`
   if (path.length > 0) {

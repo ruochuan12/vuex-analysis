@@ -122,6 +122,7 @@ export class Store {
   // 设置 state 非生产环境报错
   set state (v) {
     if (process.env.NODE_ENV !== 'production') {
+      // 使用 replaceState() 替换
       assert(false, `use store.replaceState() to explicit replace store state.`)
     }
   }
@@ -175,17 +176,23 @@ export class Store {
 
   dispatch (_type, _payload) {
     // check object-style dispatch
+    // 获取到type和payload参数
     const {
       type,
       payload
     } = unifyObjectStyle(_type, _payload)
 
+    // 声明 action 变量 等于 type和payload参数
     const action = { type, payload }
+    // 入口，也就是 _actions 集合
     const entry = this._actions[type]
+    // 如果不存在
     if (!entry) {
+      // 非生产环境报错，匹配不到 action 类型
       if (process.env.NODE_ENV !== 'production') {
         console.error(`[vuex] unknown action type: ${type}`)
       }
+      // 不往下执行
       return
     }
 
@@ -228,6 +235,12 @@ export class Store {
     return genericSubscribe(subs, this._actionSubscribers)
   }
 
+  /**
+   * 观测某个值
+   * @param {Function} getter 函数
+   * @param {Function} cb 回调
+   * @param {Object} options 参数对象
+   */
   watch (getter, cb, options) {
     if (process.env.NODE_ENV !== 'production') {
       assert(typeof getter === 'function', `store.watch only accepts a function.`)
@@ -241,32 +254,56 @@ export class Store {
     })
   }
 
+  /**
+   * 动态注册模块
+   * @param {Array|String} path 路径
+   * @param {Object} rawModule 原始未加工的模块
+   * @param {Object} options 参数选项
+   */
   registerModule (path, rawModule, options = {}) {
+    // 如果 path 是字符串，转成数组
     if (typeof path === 'string') path = [path]
 
+    // 非生产环境
     if (process.env.NODE_ENV !== 'production') {
+      // path不是数组，报错：必须是字符串或者数组
       assert(Array.isArray(path), `module path must be a string or an Array.`)
+      // 如果path长度大于0，报错不能使用 register 注册根模块
       assert(path.length > 0, 'cannot register the root module by using registerModule.')
     }
 
+    // 手动调用 模块注册的方法
     this._modules.register(path, rawModule)
+    // 安装模块
     installModule(this, this.state, path, this._modules.get(path), options.preserveState)
     // reset store to update getters...
+    // 设置 resetStoreVM
     resetStoreVM(this, this.state)
   }
 
+  // 注销模块
+  /**
+   * 注销模块
+   * @param {Array|String} path 路径
+   */
   unregisterModule (path) {
+    // 如果 path 是字符串，转成数组
     if (typeof path === 'string') path = [path]
 
+    // 非生产环境
     if (process.env.NODE_ENV !== 'production') {
+      // path不是数组，报错：必须是字符串或者数组
       assert(Array.isArray(path), `module path must be a string or an Array.`)
     }
 
+    // 手动调用模块注销
     this._modules.unregister(path)
     this._withCommit(() => {
+      // 注销这个模块
       const parentState = getNestedState(this.state, path.slice(0, -1))
       Vue.delete(parentState, path[path.length - 1])
     })
+    // 重置Store
     resetStore(this)
   }
 
@@ -302,15 +339,26 @@ function genericSubscribe (fn, subs) {
   }
 }
 
+/**
+ * 重置Store
+ * @param {Object} store Store 实例对象
+ * @param {Boolean} hot 热加载
+ */
 function resetStore (store, hot) {
+  // 重置 _actions 为空对象
   store._actions = Object.create(null)
+  // 重置 _mutations 为空对象
   store._mutations = Object.create(null)
+  // 重置 _wrappedGetters 为空对象
   store._wrappedGetters = Object.create(null)
+  // 重置 _modulesNamespaceMap 为空对象
   store._modulesNamespaceMap = Object.create(null)
   const state = store.state
   // init all modules
+  // 初始化所有模块
   installModule(store, state, [], store._modules.root, true)
   // reset vm
+  // 重置
   resetStoreVM(store, state, hot)
 }
 
@@ -490,7 +538,8 @@ function installModule (store, rootState, path, module, hot) {
 /**
  * 生成本地的dispatch、commit、getters和state
  * 主要作用就是抹平差异化，不需要用户再传模块参数
- * TODO: 举例
+ * @examples 比如 购物车的例子中，commit('setProducts', products)
+ *                          实际上会拼接成commit('products/setProducts', products) 去执行
  * @param {Object} store Store实例
  * @param {String} namespace 命名空间
  * @param {Array} path 路径

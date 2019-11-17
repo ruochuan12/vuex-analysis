@@ -26,6 +26,7 @@ export function deepCopy (obj, cache = []) {
   }
 
   // if obj is hit, it is in circular structure
+  // 考虑到环结构
   const hit = find(cache, c => c.original === obj)
   if (hit) {
     return hit.copy
@@ -49,14 +50,16 @@ export function deepCopy (obj, cache = []) {
 /**
  * forEach for object
  */
+// 遍历对象的key，数组再次遍历
 export function forEachValue (obj, fn) {
   Object.keys(obj).forEach(key => fn(obj[key], key))
 }
 
+// 是否是对象
 export function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
-
+// 是否是 Promise
 export function isPromise (val) {
   return val && typeof val.then === 'function'
 }

@@ -125,10 +125,12 @@ export const mapActions = normalizeNamespace((namespace, actions) => {
 
 /**
  * Rebinding namespace param for mapXXX function in special scoped, and return them by simple object
+ * 创建命名空间辅助函数
  * @param {String} namespace
  * @return {Object}
  */
 export const createNamespacedHelpers = (namespace) => ({
+  // bind(null) 严格模式下，napState等的函数 this 指向就是 null
   mapState: mapState.bind(null, namespace),
   mapGetters: mapGetters.bind(null, namespace),
   mapMutations: mapMutations.bind(null, namespace),
@@ -137,6 +139,7 @@ export const createNamespacedHelpers = (namespace) => ({
 
 /**
  * Normalize the map
+ * 标准化统一 map，最终返回的是数组
  * normalizeMap([1, 2, 3]) => [ { key: 1, val: 1 }, { key: 2, val: 2 }, { key: 3, val: 3 } ]
  * normalizeMap({a: 1, b: 2, c: 3}) => [ { key: 'a', val: 1 }, { key: 'b', val: 2 }, { key: 'c', val: 3 } ]
  * @param {Array|Object} map
@@ -153,6 +156,7 @@ function normalizeMap (map) {
 
 /**
  * Validate whether given map is valid or not
+ * 校验是否是map 是数组或者是对象。
  * @param {*} map
  * @return {Boolean}
  */
@@ -162,6 +166,7 @@ function isValidMap (map) {
 
 /**
  * Return a function expect two param contains namespace and map. it will normalize the namespace and then the param's function will handle the new namespace and the map.
+ * 标准化统一命名空间
  * @param {Function} fn
  * @return {Function}
  */
@@ -179,12 +184,14 @@ function normalizeNamespace (fn) {
 
 /**
  * Search a special module from store by namespace. if module not exist, print error message.
+ * 用namespace 从 store 中找一个模块。如果模块不存在打印错误信息
  * @param {Object} store
  * @param {String} helper
  * @param {String} namespace
  * @return {Object}
  */
 function getModuleByNamespace (store, helper, namespace) {
+  // _modulesNamespaceMap 这个变量在 class Store 中
   const module = store._modulesNamespaceMap[namespace]
   if (process.env.NODE_ENV !== 'production' && !module) {
     console.error(`[vuex] module namespace not found in ${helper}(): ${namespace}`)
