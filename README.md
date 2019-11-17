@@ -1,4 +1,4 @@
-# 学习 vuex 源码整体架构
+# 学习 vuex 源码整体架构，打造属于自己的状态管理库
 
 ## 前言
 
@@ -12,6 +12,7 @@
 
 感兴趣的读者可以点击阅读。
 
+TODO:
 **导读**<br/>
 
 ## chrome 浏览器调试 vuex 源码方法
@@ -24,7 +25,7 @@
 >其中文件夹`vuex`，是克隆官方的`vuex`仓库 `dev`分支。<br/>
 >`git clone https://github.com/vuejs/vuex.git` <br/>
 TODO:  修改时间和commit<br/>
->截至目前（2019年11月），版本是`v3.1.1`，最新一次commit是`540b81f`，`2019-11-09 16:45 Sai`。<br/>
+>截至目前（2019年11月），版本是`v3.1.2`，最后一次`commit`是`ba2ff3a3`，`2019-11-11 11:51 Ben Hutton`。<br/>
 >包含我的注释，便于理解。<br/>
 
 克隆完成后， 在`vuex/examples/webpack.config.js` 中添加`devtool`配置。
@@ -87,7 +88,7 @@ hs -p 8100
 
 ## vuex 原理
 
-简单说明下 vuex 原理
+简单说明下 `vuex` 原理
 
 ```js
 <template>
@@ -102,23 +103,37 @@ hs -p 8100
 
 最后显示在模板里的
 `$store.state.count`
-其实是：
+源码是这样的。
+
+```js
+class Store{
+  get state () {
+    return this._vm._data.$$state
+  }
+}
+```
+
+其实就是：
 `vm.$store._vm._data.$$state.count`
 其中`vm.$store._vm._data.$$state` 是 响应式的。
 怎么实现响应式的？其实就是`new Vue()`
 
 ```js
-store._vm = new Vue({
-  data: {
-    $$state: state
-  },
-  computed
-})
+function resetStoreVM (store, state, hot) {
+  //  省略若干 code
+  store._vm = new Vue({
+    data: {
+      $$state: state
+    },
+    computed
+  })
+  //  省略若干 code
+}
 ```
 
 这里的 `state` 就是 用户定义的 `state`。
-这里的 `computed` 就是用户定义的 `getters`。
-而 `Store.prototype`上的一些函数（API）主要都是围绕修改`vm.$store._vm._data.$$state`和`computed(getter)`服务的。
+这里的 `computed` 就是处理后的用户定义的 `getters`。
+而 `class Store`上的一些函数（API）主要都是围绕修改`vm.$store._vm._data.$$state`和`computed(getter)`服务的。
 
 ## Vue.use 安装
 
@@ -216,11 +231,11 @@ export default function (Vue) {
 }
 ```
 
+## Vuex.Store 构造函数
 
-## store
+```js
 
-### 构造函数
-
+```
 
 ## Vuex.Store 实例方法
 
