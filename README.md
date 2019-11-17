@@ -16,7 +16,7 @@
 
 ## chrome 浏览器调试 vuex 源码方法
 
-[Vue文档：在 VS Code 中调试Vue](https://cn.vuejs.org/v2/cookbook/debugging-in-vscode.html)<br/>
+[Vue文档：在 VS Code 中调试 Vue 项目](https://cn.vuejs.org/v2/cookbook/debugging-in-vscode.html)<br/>
 从上文中同理可得调试 `vuex` 方法，这里详细说下，便于帮助到可能不知道如何调试源码的读者。<br/>
 可以把我的这个 [vuex-analysis](https://github.com/lxchuan12/vuex-analysis) 源码分析仓库`fork`一份或者直接克隆下来，
 `git clone https://github.com/lxchuan12/vuex-analysis.git`
@@ -28,6 +28,7 @@ TODO:  修改时间和commit<br/>
 >包含我的注释，便于理解。<br/>
 
 克隆完成后， 在`vuex/examples/webpack.config.js` 中添加`devtool`配置。
+
 ```js
 // 新增devtool配置，便于调试
 devtool: 'source-map',
@@ -35,13 +36,52 @@ output: {}
 ```
 
 ```bash
+git clone https://github.com/lxchuan12/vuex-analysis.git
 cd vuex
 npm i
 npm run dev
-# 打开localhost:8080
-# 点击你想打开的例子，例如：Shopping Cart
+# 打开 http://localhost:8080/
+# 点击你想打开的例子，例如：http://localhost:8080/Shopping Cart
 # 打开控制面板 source 在左侧找到 webapck//      .    src 目录 store文件 根据自己需求断点调试即可。
 ```
+
+本文主要就是通过`Shopping Cart`例子调试代码的。
+
+### 顺便提一下调试 vue 源码（v2.6.10）的方法
+
+```bash
+git clone https://github.com/vuejs/vue.git
+```
+
+克隆下来后将`package.json` 文件中的`dev`命令后面添加这个 `--sourcemap`。
+
+```json
+{
+  "dev": "rollup -w -c scripts/config.js --environment TARGET:web-full-dev --sourcemap"
+}
+```
+
+```bash
+git clone https://github.com/vuejs/vue.git
+cd vue
+npm i
+# 在 dist/vue.js 最后一行追加一行 //# sourceMappingURL=vue.js.map
+npm run dev
+# 根目录下 全局安装http-server
+npm i -g http-server
+hs -p 8100
+
+# 在examples 文件夹中把引用的vuejs的index.html 文件 vue.min.js 改为 vue.js
+# 或者把dist文件夹的 vue.min.js ，替换成npm run dev编译后的dist/vue.js 
+
+# 浏览器打开 open http://localhost:8100/examples/
+
+# 打开控制面板 source 在左侧找到  src 目录 即vue.js源码文件 根据自己需求断点调试即可。
+```
+
+本小节大篇幅介绍调试方法。是因为真的很重要。会调试代码，可以看源码就比较简单了。关注主线调试代码，很容易看懂。<br/>
+**强烈建议克隆我的这个仓库，自己调试代码，对着注释看，不调试代码，只看文章不容易吸收消化**。<br/>
+我也看了文章末尾我推荐阅读的文章，但还是需要自己看源代码，才知道这些文章哪里写到了，哪里没有细写。 <br/>
 
 正文开始～
 
@@ -78,7 +118,7 @@ store._vm = new Vue({
 
 这里的 `state` 就是 用户定义的 `state`。
 这里的 `computed` 就是用户定义的 `getters`。
-而 `Store.prototype`上的一些函数（API）主要都是围绕修改`vm.$store._vm._data.$$state`服务的。
+而 `Store.prototype`上的一些函数（API）主要都是围绕修改`vm.$store._vm._data.$$state`和`computed(getter)`服务的。
 
 ## Vue.use 安装
 
