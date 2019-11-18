@@ -42,8 +42,8 @@ cd vuex
 npm i
 npm run dev
 # 打开 http://localhost:8080/
-# 点击你想打开的例子，例如：http://localhost:8080/Shopping Cart
-# 打开控制面板 source 在左侧找到 webapck//      .    src 目录 store文件 根据自己需求断点调试即可。
+# 点击你想打开的例子，例如：Shopping Cart => http://localhost:8080/shopping-cart/
+# 打开控制面板 source 在左侧找到 webapck//  .  src 目录 store 文件 根据自己需求断点调试即可。
 ```
 
 本文主要就是通过`Shopping Cart`例子调试代码的。
@@ -80,7 +80,7 @@ hs -p 8100
 # 打开控制面板 source 在左侧找到  src 目录 即vue.js源码文件 根据自己需求断点调试即可。
 ```
 
-本小节大篇幅介绍调试方法。是因为真的很重要。会调试代码，可以看源码就比较简单了。关注主线调试代码，很容易看懂。<br/>
+本小节大篇幅介绍调试方法。是因为真的很重要。会调试代码，看源码就比较简单了。关注主线调试代码，很容易看懂。<br/>
 **强烈建议克隆我的这个仓库，自己调试代码，对着注释看，不调试代码，只看文章不容易吸收消化**。<br/>
 我也看了文章末尾我推荐阅读的文章，但还是需要自己看源代码，才知道这些文章哪里写到了，哪里没有细写。 <br/>
 
@@ -98,7 +98,7 @@ hs -p 8100
 </template>
 ```
 
-每个组件（也就是`Vue实例`）都混入（Vue.mixin） 同一个`Store实例` 作为属性 `$store`，
+每个组件（也就是`Vue实例`）在`beforeCreate`的声明周期中都混入（Vue.mixin）同一个`Store实例` 作为属性 `$store`，
 也就是为啥可以通过this.$store.dispatch等调用方法的原因。
 
 最后显示在模板里的
@@ -138,7 +138,7 @@ function resetStoreVM (store, state, hot) {
 ## Vue.use 安装
 
 [文档 Vue.use](https://cn.vuejs.org/v2/api/#Vue-use)
-Vue.use(Vuex)
+`Vue.use(Vuex)`
 
 >参数：
 {Object | Function} plugin
@@ -197,7 +197,7 @@ export default function (Vue) {
   const version = Number(Vue.version.split('.')[0])
 
   if (version >= 2) {
-    // 合并选项后 beforeCreate 是数组里函数的形式  [func,  func]
+    // 合并选项后 beforeCreate 是数组里函数的形式  [ƒ,  ƒ]
     // 最后调用循环遍历这个数组，调用这些函数，这是一种函数与函数合并的解决方案。
     // 假设是我们自己来设计，会是什么方案呢。
     Vue.mixin({ beforeCreate: vuexInit })
