@@ -51,6 +51,7 @@ export const mapState = normalizeNamespace((namespace, states) => {
  */
 export const mapMutations = normalizeNamespace((namespace, mutations) => {
   const res = {}
+  // 非生产环境 判断参数 mutations  必须是数组或者是对象
   if (process.env.NODE_ENV !== 'production' && !isValidMap(mutations)) {
     console.error('[vuex] mapMutations: mapper parameter must be either an Array or an Object')
   }
@@ -81,6 +82,7 @@ export const mapMutations = normalizeNamespace((namespace, mutations) => {
  */
 export const mapGetters = normalizeNamespace((namespace, getters) => {
   const res = {}
+  // 非生产环境 判断参数 getters  必须是数组或者是对象
   if (process.env.NODE_ENV !== 'production' && !isValidMap(getters)) {
     console.error('[vuex] mapGetters: mapper parameter must be either an Array or an Object')
   }
@@ -111,6 +113,7 @@ export const mapGetters = normalizeNamespace((namespace, getters) => {
  */
 export const mapActions = normalizeNamespace((namespace, actions) => {
   const res = {}
+  // 非生产环境 判断参数 actions  必须是数组或者是对象
   if (process.env.NODE_ENV !== 'production' && !isValidMap(actions)) {
     console.error('[vuex] mapActions: mapper parameter must be either an Array or an Object')
   }

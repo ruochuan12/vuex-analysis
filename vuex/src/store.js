@@ -42,7 +42,7 @@ export class Store {
     } = options
 
     // store internal state
-    // store实例 内部的 state
+    // store 实例对象 内部的 state
     this._committing = false
     // 用来存放处理后的用户自定义的actoins
     /**

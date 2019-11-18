@@ -50,6 +50,7 @@ export default class ModuleCollection {
     }
 
     // register nested modules
+    // 递归注册子模块
     if (rawModule.modules) {
       forEachValue(rawModule.modules, (rawChildModule, key) => {
         this.register(path.concat(key), rawChildModule, runtime)

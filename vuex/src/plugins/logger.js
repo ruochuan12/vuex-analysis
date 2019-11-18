@@ -15,6 +15,7 @@ export default function createLogger ({
     let prevState = deepCopy(store.state)
 
     store.subscribe((mutation, state) => {
+      // 不支持 console，直接返回不执行后续代码
       if (typeof logger === 'undefined') {
         return
       }
