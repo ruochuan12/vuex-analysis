@@ -10,6 +10,7 @@ export default function createLogger ({
   mutationTransformer = mut => mut,
   logger = console
 } = {}) {
+  // 返回一个箭头函数，store实例对象为参数
   return store => {
     let prevState = deepCopy(store.state)
 
@@ -21,7 +22,7 @@ export default function createLogger ({
       const nextState = deepCopy(state)
 
       if (filter(mutation, prevState, nextState)) {
-        // 
+        // 时间对象
         const time = new Date()
         // 格式化时分秒毫秒
         const formattedTime = ` @ ${pad(time.getHours(), 2)}:${pad(time.getMinutes(), 2)}:${pad(time.getSeconds(), 2)}.${pad(time.getMilliseconds(), 3)}`
@@ -40,6 +41,7 @@ export default function createLogger ({
           console.log(message)
         }
 
+        // transformer = state => state,
         logger.log('%c prev state', 'color: #9E9E9E; font-weight: bold', transformer(prevState))
         logger.log('%c mutation', 'color: #03A9F4; font-weight: bold', formattedMutation)
         logger.log('%c next state', 'color: #4CAF50; font-weight: bold', transformer(nextState))

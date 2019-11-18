@@ -281,7 +281,6 @@ export class Store {
     resetStoreVM(this, this.state)
   }
 
-  // 注销模块
   /**
    * 注销模块
    * @param {Array|String} path 路径
@@ -459,6 +458,7 @@ function installModule (store, rootState, path, module, hot) {
 
   // register in namespace map
   // 注册在命名空间的map对象中。
+  // 模块命名控件为 true 执行以下代码
   if (module.namespaced) {
     // 模块命名空间map对象中已经有了，开发环境报错提示重复
     if (store._modulesNamespaceMap[namespace] && process.env.NODE_ENV !== 'production') {
@@ -474,8 +474,9 @@ function installModule (store, rootState, path, module, hot) {
     // 获取父级的state
     const parentState = getNestedState(rootState, path.slice(0, -1))
     // 模块名称
+    // 比如 cart
     const moduleName = path[path.length - 1]
-    // 设置
+    // state 注册
     store._withCommit(() => {
       if (process.env.NODE_ENV !== 'production') {
         if (moduleName in parentState) {
@@ -484,6 +485,21 @@ function installModule (store, rootState, path, module, hot) {
           )
         }
       }
+      /**
+       * 最后得到的是类似这样的结构且是响应式的数据 比如
+       *
+       Store实例：{
+        // 省略若干属性和方法
+        // 这里的state是只读属性 可搜索 get state 查看
+        state: {
+          cart: {
+            checkoutStatus: null,
+            items: []
+          }
+        }
+       }
+       *
+       */
       Vue.set(parentState, moduleName, module.state)
     })
   }
@@ -539,7 +555,7 @@ function installModule (store, rootState, path, module, hot) {
  * 生成本地的dispatch、commit、getters和state
  * 主要作用就是抹平差异化，不需要用户再传模块参数
  * @examples 比如 购物车的例子中，commit('setProducts', products)
- *                          实际上会拼接成commit('products/setProducts', products) 去执行
+ *           实际上会拼接成commit('products/setProducts', products) 去执行
  * @param {Object} store Store实例
  * @param {String} namespace 命名空间
  * @param {Array} path 路径
@@ -627,7 +643,7 @@ function makeLocalGetters (store, namespace) {
     const splitPos = namespace.length
     // 其实这里可以用util中的forEachValue方法优化
     /**
-     * 
+     *
     export function forEachValue (obj, fn) {
       Object.keys(obj).forEach(key => fn(obj[key], key))
     }

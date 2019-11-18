@@ -8,18 +8,27 @@ import { isObject } from './util'
  */
 export const mapState = normalizeNamespace((namespace, states) => {
   const res = {}
+  // 非生产环境 判断参数 states  必须是数组或者是对象
   if (process.env.NODE_ENV !== 'production' && !isValidMap(states)) {
     console.error('[vuex] mapState: mapper parameter must be either an Array or an Object')
   }
+  // 最终都是返回数组
   normalizeMap(states).forEach(({ key, val }) => {
     res[key] = function mappedState () {
       let state = this.$store.state
       let getters = this.$store.getters
+      // 传了参数 namespace
       if (namespace) {
+        // 用 namespace 从 store 中找一个模块。
         const module = getModuleByNamespace(this.$store, 'mapState', namespace)
         if (!module) {
           return
         }
+        /**
+         * module.context  这个赋值主要是给 helpers 中 mapState、mapGetters、mapMutations、mapActions四个辅助函数使用的。
+         * const local = module.context = makeLocalContext(store, namespace, path)
+         * 这里就是抹平差异，获取到对应的 state 和 getters
+         */
         state = module.context.state
         getters = module.context.getters
       }
@@ -27,6 +36,7 @@ export const mapState = normalizeNamespace((namespace, states) => {
         ? val.call(this, state, getters)
         : state[val]
     }
+    // 标记为 vuex 方便 在devtools 显示
     // mark vuex getter for devtools
     res[key].vuex = true
   })
@@ -184,7 +194,7 @@ function normalizeNamespace (fn) {
 
 /**
  * Search a special module from store by namespace. if module not exist, print error message.
- * 用namespace 从 store 中找一个模块。如果模块不存在打印错误信息
+ * 用 namespace 从 store 中找一个模块。如果模块不存在打印错误信息
  * @param {Object} store
  * @param {String} helper
  * @param {String} namespace
