@@ -12,7 +12,11 @@ export const mapState = normalizeNamespace((namespace, states) => {
   if (process.env.NODE_ENV !== 'production' && !isValidMap(states)) {
     console.error('[vuex] mapState: mapper parameter must be either an Array or an Object')
   }
-  // 最终都是返回数组
+  /**
+   * normalizeMap 最终都是返回数组 [ { key, val } ] 形式
+   * normalizeMap([1, 2, 3]) => [ { key: 1, val: 1 }, { key: 2, val: 2 }, { key: 3, val: 3 } ]
+   * normalizeMap({a: 1, b: 2, c: 3}) => [ { key: 'a', val: 1 }, { key: 'b', val: 2 }, { key: 'c', val: 3 } ]
+   */
   normalizeMap(states).forEach(({ key, val }) => {
     res[key] = function mappedState () {
       let state = this.$store.state
@@ -36,7 +40,7 @@ export const mapState = normalizeNamespace((namespace, states) => {
         ? val.call(this, state, getters)
         : state[val]
     }
-    // 标记为 vuex 方便 在devtools 显示
+    // 标记为 vuex 方便在 devtools 显示
     // mark vuex getter for devtools
     res[key].vuex = true
   })

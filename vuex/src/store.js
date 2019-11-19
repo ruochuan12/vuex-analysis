@@ -367,7 +367,7 @@ function resetStoreVM (store, state, hot) {
   const oldVm = store._vm
 
   // bind store public getters
-  // 绑定store.getter
+  // 绑定 store.getter
   store.getters = {}
   // reset local getters cache
   // 重置 本地getters的缓存
@@ -376,7 +376,7 @@ function resetStoreVM (store, state, hot) {
   const wrappedGetters = store._wrappedGetters
   // 声明 计算属性 computed 对象
   const computed = {}
-  // 遍历 wrappedGetters 赋值到computed 上
+  // 遍历 wrappedGetters 赋值到 computed 上
   forEachValue(wrappedGetters, (fn, key) => {
     // use computed to leverage its lazy-caching mechanism
     // direct inline function use will lead to closure preserving oldVm.
@@ -457,8 +457,20 @@ function installModule (store, rootState, path, module, hot) {
   const namespace = store._modules.getNamespace(path)
 
   // register in namespace map
-  // 注册在命名空间的map对象中。
-  // 模块命名控件为 true 执行以下代码
+  /**
+   * 
+   * 注册在命名空间的map对象中。
+   * 模块命名控件为 true 执行以下代码
+   * 主要用于在 helpers 辅助函数，根据命名空间获取模块
+   * function getModuleByNamespace (store, helper, namespace) {
+      // _modulesNamespaceMap 这个变量在 class Store 中
+      const module = store._modulesNamespaceMap[namespace]
+      if (process.env.NODE_ENV !== 'production' && !module) {
+        console.error(`[vuex] module namespace not found in ${helper}(): ${namespace}`)
+      }
+      return module
+    }
+   */
   if (module.namespaced) {
     // 模块命名空间map对象中已经有了，开发环境报错提示重复
     if (store._modulesNamespaceMap[namespace] && process.env.NODE_ENV !== 'production') {
@@ -505,6 +517,8 @@ function installModule (store, rootState, path, module, hot) {
   }
 
   // module.context  这个赋值主要是给 helpers 中 mapState、mapGetters、mapMutations、mapActions四个辅助函数使用的。
+  //  生成本地的dispatch、commit、getters和state
+  //  主要作用就是抹平差异化，不需要用户再传模块参数
   const local = module.context = makeLocalContext(store, namespace, path)
 
   /**
@@ -580,7 +594,7 @@ function makeLocalContext (store, namespace, path) {
       if (!options || !options.root) {
         // 类型 命名空间字符串拼接
         type = namespace + type
-        // 非生成环境，最终收集的 _ations 里找不到，报错不知道的局部type和全局type。
+        // 非生产环境，最终收集的 _ations 里找不到，报错不知道的局部type和全局type。
         if (process.env.NODE_ENV !== 'production' && !store._actions[type]) {
           console.error(`[vuex] unknown local action type: ${args.type}, global type: ${type}`)
           return

@@ -37,6 +37,7 @@ export default class ModuleCollection {
    * @param {Boolean} runtime runtime 默认是 true
    */
   register (path, rawModule, runtime = true) {
+    // 非生产环境 断言判断用户自定义的模块是否符合要求
     if (process.env.NODE_ENV !== 'production') {
       assertRawModule(path, rawModule)
     }
