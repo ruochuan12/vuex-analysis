@@ -25,7 +25,8 @@ export default class ModuleCollection {
     }, '')
   }
 
-  // 更新模块
+  // 更新模块，用于 热加载 hotUpdate
+  // this._modules.update();
   update (rawRootModule) {
     update([], this.root, rawRootModule)
   }

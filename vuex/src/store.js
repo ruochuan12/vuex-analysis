@@ -133,11 +133,11 @@ export class Store {
     /**
     * 支持多种方式
     * 最后返回  { type, payload, options }
-     * this.$store.commit('increment', {
+     *  store.commit('increment', {
      *    count: 10
      *  })
      *  // 对象提交方式
-     *  this.$store.commit({
+     *  store.commit({
      *    type: 'increment',
      *    count: 10
      *  })
@@ -149,6 +149,7 @@ export class Store {
     } = unifyObjectStyle(_type, _payload, _options)
 
     const mutation = { type, payload }
+    // 取出处理后的用户定义 mutation
     const entry = this._mutations[type]
     if (!entry) {
       if (process.env.NODE_ENV !== 'production') {
@@ -248,6 +249,8 @@ export class Store {
     return this._watcherVM.$watch(() => getter(this.state, this.getters), cb, options)
   }
 
+  // 这个函数仅在 devtool 调试工具中用到。
+  // 替换 `store` 的根状态，仅用状态合并或时光旅行调试。
   replaceState (state) {
     this._withCommit(() => {
       this._vm._data.$$state = state
@@ -302,7 +305,7 @@ export class Store {
       const parentState = getNestedState(this.state, path.slice(0, -1))
       Vue.delete(parentState, path[path.length - 1])
     })
-    // 重置Store
+    // 重置 Store
     resetStore(this)
   }
 
@@ -313,7 +316,7 @@ export class Store {
   }
 
   // 内部方法 _withCommit _committing 变量 主要是给严格模式下
-  // enableStrictMode函数 监控是否是通过这个函数修改，不是则报错。
+  // enableStrictMode 函数 监控是否是通过这个函数修改，不是则报错。
   _withCommit (fn) {
     // 存储committing 变量
     const committing = this._committing

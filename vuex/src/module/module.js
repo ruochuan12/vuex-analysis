@@ -45,7 +45,9 @@ export default class Module {
     return this._children[key]
   }
 
-  // 更新
+  // 更新模块，用于 热加载 hotUpdate
+  // this._modules.update();
+  // > module-collection update
   // 把 原始模块作为参数，分别赋值namespaced、actions、mutations、getters
   update (rawModule) {
     this._rawModule.namespaced = rawModule.namespaced
