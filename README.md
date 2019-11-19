@@ -135,6 +135,36 @@ function resetStoreVM (store, state, hot) {
 这里的 `computed` 就是处理后的用户定义的 `getters`。
 而 `class Store`上的一些函数（API）主要都是围绕修改`vm.$store._vm._data.$$state`和`computed(getter)`服务的。
 
+## _data isReserved proxy
+
+```js
+/**
+ * Check if a string starts with $ or _
+ */
+function isReserved (str) {
+  var c = (str + '').charCodeAt(0);
+  return c === 0x24 || c === 0x5F
+}
+```
+
+```js
+if (!isReserved(key)) {
+	proxy(vm, "_data", key);
+}
+```
+
+```js
+function proxy (target, sourceKey, key) {
+  sharedPropertyDefinition.get = function proxyGetter () {
+    return this[sourceKey][key]
+  };
+  sharedPropertyDefinition.set = function proxySetter (val) {
+    this[sourceKey][key] = val;
+  };
+  Object.defineProperty(target, key, sharedPropertyDefinition);
+}
+```
+
 ## Vue.use 安装
 
 [文档 Vue.use](https://cn.vuejs.org/v2/api/#Vue-use)
@@ -185,12 +215,7 @@ function initUse (Vue) {
 export function install (_Vue) {
   // Vue 已经存在并且相等，说明已经Vuex.use过
   if (Vue && _Vue === Vue) {
-    // 非生产环境报错，vuex已经安装，代码继续执行
-    if (process.env.NODE_ENV !== 'production') {
-      console.error(
-        '[vuex] already installed. Vue.use(Vuex) should be called only once.'
-      )
-    }
+    // 省略代码：非生产环境报错，vuex已经安装
     return
   }
   Vue = _Vue
@@ -335,7 +360,6 @@ this._makeLocalGettersCache = Object.create(null)
 
 ```js
 // bind commit and dispatch to self
-// 给自己 绑定 commit 和 dispatch
 const store = this
 const { dispatch, commit } = this
 this.dispatch = function boundDispatch (type, payload) {
@@ -489,10 +513,7 @@ function installModule (store, rootState, path, module, hot) {
   // 命名空间 字符串
   const namespace = store._modules.getNamespace(path)
   if (module.namespaced) {
-    // 模块命名空间map对象中已经有了，开发环境报错提示重复
-    if (store._modulesNamespaceMap[namespace] && process.env.NODE_ENV !== 'production') {
-      console.error(`[vuex] duplicate namespace ${namespace} for the namespaced module ${path.join('/')}`)
-    }
+    // 省略代码： 模块命名空间map对象中已经有了，开发环境报错提示重复
     // module 赋值给 _modulesNamespaceMap[namespace]
     store._modulesNamespaceMap[namespace] = module
   }
@@ -511,13 +532,7 @@ if (!isRoot && !hot) {
   const moduleName = path[path.length - 1]
   // state 注册
   store._withCommit(() => {
-    if (process.env.NODE_ENV !== 'production') {
-      if (moduleName in parentState) {
-        console.warn(
-          `[vuex] state field "${moduleName}" was overridden by a module with the same name at "${path.join('.')}"`
-        )
-      }
-    }
+    // 省略代码：非生产环境 报错 模块 state 重复设置
     Vue.set(parentState, moduleName, module.state)
   })
 }
@@ -768,7 +783,7 @@ function resetStoreVM (store, state, hot) {
 
   // enable strict mode for new vm
   // 开启严格模式 执行这句
-  // 用$watch 观测 state，只能使用 mutation 修改 也就是 _withCommit 函数
+  // 用 $watch 观测 state，只能使用 mutation 修改 也就是 _withCommit 函数
   if (store.strict) {
     enableStrictMode(store)
   }
@@ -792,107 +807,283 @@ function resetStoreVM (store, state, hot) {
 
 TODO: 画图
 
+构造函数源代码看完了，接下来看 `Vuex.Store` 的 一些 `API` 实现。
+
 ## Vuex.Store 实例方法
 
 [Vuex API 文档](https://vuex.vuejs.org/zh/api/)
 
 ### commit
 
-提交 mutation。
+提交 `mutation`。
+
+```js
+commit (_type, _payload, _options) {
+  // check object-style commit
+  // 统一成对象风格
+  const {
+    type,
+    payload,
+    options
+  } = unifyObjectStyle(_type, _payload, _options)
+
+  const mutation = { type, payload }
+  // 取出处理后的用户定义 mutation
+  const entry = this._mutations[type]
+  // 省略 非生产环境的警告代码 ...
+  this._withCommit(() => {
+    // 遍历执行
+    entry.forEach(function commitIterator (handler) {
+      handler(payload)
+    })
+  })
+  // 订阅 mutation 执行
+  this._subscribers.forEach(sub => sub(mutation, this.state))
+
+  // 省略 非生产环境的警告代码 ...
+}
+```
+
+`commit` 支持多种方式。比如：<br>
+
+```js
+store.commit('increment', {
+  count: 10
+})
+// 对象提交方式
+store.commit({
+  type: 'increment',
+  count: 10
+})
+```
+
+`unifyObjectStyle`函数将参数统一，返回 `{ type, payload, options }`。
 
 ### dispatch
 
-分发 action。
+分发 `action`。
+
+```js
+dispatch (_type, _payload) {
+  // check object-style dispatch
+  // 获取到type和payload参数
+  const {
+    type,
+    payload
+  } = unifyObjectStyle(_type, _payload)
+
+  // 声明 action 变量 等于 type和payload参数
+  const action = { type, payload }
+  // 入口，也就是 _actions 集合
+  const entry = this._actions[type]
+  // 省略 非生产环境的警告代码 ...
+  try {
+    this._actionSubscribers
+      .filter(sub => sub.before)
+      .forEach(sub => sub.before(action, this.state))
+  } catch (e) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(`[vuex] error in before action subscribers: `)
+      console.error(e)
+    }
+  }
+
+  const result = entry.length > 1
+    ? Promise.all(entry.map(handler => handler(payload)))
+    : entry[0](payload)
+
+  return result.then(res => {
+    try {
+      this._actionSubscribers
+        .filter(sub => sub.after)
+        .forEach(sub => sub.after(action, this.state))
+    } catch (e) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(`[vuex] error in after action subscribers: `)
+        console.error(e)
+      }
+    }
+    return res
+  })
+}
+```
 
 ### replaceState
 
-替换 store 的根状态，仅用状态合并或时光旅行调试。
+替换 `store` 的根状态，仅用状态合并或时光旅行调试。
+
+```js
+replaceState (state) {
+  this._withCommit(() => {
+    this._vm._data.$$state = state
+  })
+}
+```
 
 ### watch
 
 响应式地侦听 fn 的返回值，当值改变时调用回调函数。
 
+```js
+/**
+ * 观测某个值
+ * @param {Function} getter 函数
+ * @param {Function} cb 回调
+ * @param {Object} options 参数对象
+ */
+watch (getter, cb, options) {
+  if (process.env.NODE_ENV !== 'production') {
+    assert(typeof getter === 'function', `store.watch only accepts a function.`)
+  }
+  return this._watcherVM.$watch(() => getter(this.state, this.getters), cb, options)
+}
+```
+
 ### subscribe
 
 订阅 store 的 mutation。
+
+```js
+subscribe (fn) {
+  return genericSubscribe(fn, this._subscribers)
+}
+```
+
+```js
+// 收集订阅者
+function genericSubscribe (fn, subs) {
+  if (subs.indexOf(fn) < 0) {
+    subs.push(fn)
+  }
+  return () => {
+    const i = subs.indexOf(fn)
+    if (i > -1) {
+      subs.splice(i, 1)
+    }
+  }
+}
+```
 
 ### subscribeAction
 
 订阅 store 的 action。
 
+```js
+subscribeAction (fn) {
+  const subs = typeof fn === 'function' ? { before: fn } : fn
+  return genericSubscribe(subs, this._actionSubscribers)
+}
+```
+
 ### registerModule
 
 注册一个动态模块。
+
+```js
+/**
+ * 动态注册模块
+ * @param {Array|String} path 路径
+ * @param {Object} rawModule 原始未加工的模块
+ * @param {Object} options 参数选项
+ */
+registerModule (path, rawModule, options = {}) {
+  // 如果 path 是字符串，转成数组
+  if (typeof path === 'string') path = [path]
+
+  // 省略 非生产环境 报错代码
+
+  // 手动调用 模块注册的方法
+  this._modules.register(path, rawModule)
+  // 安装模块
+  installModule(this, this.state, path, this._modules.get(path), options.preserveState)
+  // reset store to update getters...
+  // 设置 resetStoreVM
+  resetStoreVM(this, this.state)
+}
+```
 
 ### unregisterModule
 
 卸载一个动态模块。
 
+```js
+/**
+ * 注销模块
+ * @param {Array|String} path 路径
+ */
+unregisterModule (path) {
+  // 如果 path 是字符串，转成数组
+  if (typeof path === 'string') path = [path]
+
+  // 省略 非生产环境 报错代码 ...
+
+  // 手动调用模块注销
+  this._modules.unregister(path)
+  this._withCommit(() => {
+    // 注销这个模块
+    const parentState = getNestedState(this.state, path.slice(0, -1))
+    Vue.delete(parentState, path[path.length - 1])
+  })
+  // 重置 Store
+  resetStore(this)
+}
+```
+
 ### hotUpdate
 
-热替换新的 action 和 mutation。
+热替换新的 `action` 和 `mutation`。
+
+```js
+// 热加载
+hotUpdate (newOptions) {
+  // 调用的是 ModuleCollection 的 update 方法，最终调用对应的是每个 Module 的 update
+  this._modules.update(newOptions)
+  // 重置 Store
+  resetStore(this, true)
+}
+```
 
 ## 组件绑定的辅助函数
 
 ### mapState
 
-为组件创建计算属性以返回 Vuex store 中的状态。
+为组件创建计算属性以返回 `Vuex store` 中的状态。
 
 ### mapGetters
 
-为组件创建计算属性以返回 getter 的返回值。
+为组件创建计算属性以返回 `getter` 的返回值。
 
 ### mapActions
 
-创建组件方法分发 action。
+创建组件方法分发 `action`。
 
 ### mapMutations
 
-创建组件方法提交 mutation。
+创建组件方法提交 `mutation`。
+
+[vuex/src/helpers](https://github.com/lxchuan12/vuex-analysis/blob/master/vuex/src/helpers.js)
 
 ### createNamespacedHelpers
 
 创建基于命名空间的组件绑定辅助函数。
 
-## 细节点
-
-### isReserved proxy
-
 ```js
-/**
- * Check if a string starts with $ or _
- */
-function isReserved (str) {
-  var c = (str + '').charCodeAt(0);
-  return c === 0x24 || c === 0x5F
-}
-```
-
-```js
-if (!isReserved(key)) {
-	proxy(vm, "_data", key);
-}
-```
-
-```js
-function proxy (target, sourceKey, key) {
-  sharedPropertyDefinition.get = function proxyGetter () {
-    return this[sourceKey][key]
-  };
-  sharedPropertyDefinition.set = function proxySetter (val) {
-    this[sourceKey][key] = val;
-  };
-  Object.defineProperty(target, key, sharedPropertyDefinition);
-}
+export const createNamespacedHelpers = (namespace) => ({
+  // bind(null) 严格模式下，napState等的函数 this 指向就是 null
+  mapState: mapState.bind(null, namespace),
+  mapGetters: mapGetters.bind(null, namespace),
+  mapMutations: mapMutations.bind(null, namespace),
+  mapActions: mapActions.bind(null, namespace)
+})
 ```
 
 ## 插件
 
-插件部分在<br>
-vuex/src/plugins/devtool<br>
-vuex/src/plugins/logger<br>
+插件部分文件路径是：<br>
+`vuex/src/plugins/devtool`<br>
+`vuex/src/plugins/logger`<br>
 
-文章比较长了，这部分就不在叙述。具体可以看笔者的仓库 [vuex-analysis `vuex/src/plugins/`](https://github.com/lxchuan12/vuex-analysis/blob/master/vuex/src/plugins/logger.js) 源码注释。
+文章比较长了，这部分就不再叙述。具体可以看笔者的仓库 [vuex-analysis `vuex/src/plugins/`](https://github.com/lxchuan12/vuex-analysis/blob/master/vuex/src/plugins/logger.js) 的源码注释。
 
 ## 总结
 
@@ -905,8 +1096,8 @@ vuex/src/plugins/logger<br>
 [vuex 官方文档](https://vuex.vuejs.org/zh/)<br>
 [vuex github 仓库](https://github.com/vuejs/vuex)<br>
 [美团明裔：Vuex框架原理与源码分析](https://tech.meituan.com/2017/04/27/vuex-code-analysis.html)**这篇文章强烈推荐，流程图画的很好**<br>
-[小虫巨蟹：Vuex 源码解析（如何阅读源代码实践篇）](https://juejin.im/post/5962c13c6fb9a06b9e11a6a9)**这篇文章也强烈推荐，主要讲如何阅读源代码**<br>
 [知乎黄轶：Vuex 2.0 源码分析](https://zhuanlan.zhihu.com/p/23921964)**这篇文章也强烈推荐，讲述的比较全面**<br>
+[小虫巨蟹：Vuex 源码解析（如何阅读源代码实践篇）](https://juejin.im/post/5962c13c6fb9a06b9e11a6a9)**这篇文章也强烈推荐，主要讲如何阅读源代码**<br>
 [染陌：Vuex 源码解析](https://juejin.im/post/59f66bd7f265da432d275d30)<br>
 [网易考拉前端团队：Vuex 源码分析](https://juejin.im/post/59b88e2e6fb9a00a4f1b0a0b#heading-8)<br>
 [yck：Vuex 源码深度解析](https://juejin.im/post/5b8e3182e51d4538ae4dce87)<br>
