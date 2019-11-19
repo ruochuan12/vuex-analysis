@@ -167,6 +167,10 @@ function proxy (target, sourceKey, key) {
 
 ## Vue.use 安装
 
+笔者画了一张图表示下`Vuex`对象，是`Vue`的一个插件。
+
+![Vuex 对象关系图](./iamges/../images/vuex-object.png)
+
 [文档 Vue.use](https://cn.vuejs.org/v2/api/#Vue-use)
 `Vue.use(Vuex)`
 
@@ -279,6 +283,9 @@ console.log('vm.$store === vm.$children[0].$children[1].$store', vm.$store === v
 
 ## Vuex.Store 构造函数
 
+先看最终new Vuex.Store之后的 Store 实例对象关系图：先大致有个印象。
+![new Vuex.Store之后的 Store 实例对象关系图](./images/vuex-store.instance.png)
+
 ```js
 export class Store {
   constructor (options = {}) {
@@ -310,7 +317,6 @@ if (process.env.NODE_ENV !== 'production') {
   assert(this instanceof Store, `store must be called with the new operator.`)
 }
 ```
-
 
 条件断言：不满足直接抛出错误
 >1.必须使用 `Vue.use(Vuex)` 创建 `store` 实例。<br>
@@ -471,8 +477,6 @@ register (path, rawModule, runtime = true) {
 }
 ```
 
-TODO: 画图
-
 #### class Module
 
 ```js
@@ -498,11 +502,12 @@ export default class Module {
 }
 ```
 
-TODO: 画图
 经过一系列的注册后，最后
 `this._modules = new ModuleCollection(options)`
 `this._modules` 的值是这样的。
 笔者画了一张图表示：
+
+![ModuleCollection](./images/vuex-store-module-collection-instance.png)
 
 ### installModule 函数
 
@@ -941,7 +946,7 @@ watch (getter, cb, options) {
 
 ### subscribe
 
-订阅 store 的 mutation。
+订阅 `store` 的 `mutation`。
 
 ```js
 subscribe (fn) {
@@ -966,7 +971,7 @@ function genericSubscribe (fn, subs) {
 
 ### subscribeAction
 
-订阅 store 的 action。
+订阅 `store` 的 `action`。
 
 ```js
 subscribeAction (fn) {
