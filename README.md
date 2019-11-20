@@ -136,36 +136,6 @@ function resetStoreVM (store, state, hot) {
 这里的 `computed` 就是处理后的用户定义的 `getters`。
 而 `class Store`上的一些函数（API）主要都是围绕修改`vm.$store._vm._data.$$state`和`computed(getter)`服务的。
 
-## _data isReserved proxy
-
-```js
-/**
- * Check if a string starts with $ or _
- */
-function isReserved (str) {
-  var c = (str + '').charCodeAt(0);
-  return c === 0x24 || c === 0x5F
-}
-```
-
-```js
-if (!isReserved(key)) {
-	proxy(vm, "_data", key);
-}
-```
-
-```js
-function proxy (target, sourceKey, key) {
-  sharedPropertyDefinition.get = function proxyGetter () {
-    return this[sourceKey][key]
-  };
-  sharedPropertyDefinition.set = function proxySetter (val) {
-    this[sourceKey][key] = val;
-  };
-  Object.defineProperty(target, key, sharedPropertyDefinition);
-}
-```
-
 ## Vue.use 安装
 
 笔者画了一张图表示下`Vuex`对象，是`Vue`的一个插件。
@@ -419,7 +389,7 @@ if (useDevtools) {
 }
 ```
 
-初始化 vue-devtool 开发工具。<br>
+初始化 `vue-devtool` 开发工具。<br>
 参数 `devtools` 传递了取 `devtools` 否则取`Vue.config.devtools` 配置。
 
 初读这个构造函数的全部源代码。会发现有三个地方需要重点看。分别是：<br>
@@ -1051,7 +1021,7 @@ hotUpdate (newOptions) {
 
 ## 组件绑定的辅助函数
 
-文件路径：`vuex/src/helpers.js`
+文件路径：[`vuex/src/helpers.js`](https://github.com/lxchuan12/vuex-analysis/blob/master/vuex/src/helpers.js)
 
 ### mapState
 
