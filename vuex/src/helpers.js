@@ -86,7 +86,7 @@ export const mapMutations = normalizeNamespace((namespace, mutations) => {
  */
 export const mapGetters = normalizeNamespace((namespace, getters) => {
   const res = {}
-  // 非生产环境 判断参数 getters  必须是数组或者是对象
+  // 非生产环境 判断参数 getters 必须是数组或者是对象
   if (process.env.NODE_ENV !== 'production' && !isValidMap(getters)) {
     console.error('[vuex] mapGetters: mapper parameter must be either an Array or an Object')
   }
@@ -208,7 +208,7 @@ function normalizeNamespace (fn) {
  * @return {Object}
  */
 function getModuleByNamespace (store, helper, namespace) {
-  // _modulesNamespaceMap 这个变量在 class Store 中
+  // _modulesNamespaceMap 这个变量在 class Store installModule 函数中赋值的
   const module = store._modulesNamespaceMap[namespace]
   if (process.env.NODE_ENV !== 'production' && !module) {
     console.error(`[vuex] module namespace not found in ${helper}(): ${namespace}`)
