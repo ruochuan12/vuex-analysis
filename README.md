@@ -140,7 +140,7 @@ function resetStoreVM (store, state, hot) {
 
 笔者画了一张图表示下`Vuex`对象，是`Vue`的一个插件。
 
-![Vuex 对象关系图](./iamges/../images/vuex-object.png)
+![Vuex 对象关系图](./images/vuex-object.png)
 
 [文档 Vue.use](https://cn.vuejs.org/v2/api/#Vue-use)
 `Vue.use(Vuex)`
@@ -254,7 +254,7 @@ console.log('vm.$store === vm.$children[0].$children[1].$store', vm.$store === v
 
 ## Vuex.Store 构造函数
 
-先看最终new Vuex.Store之后的 Store 实例对象关系图：先大致有个印象。
+先看最终 `new Vuex.Store` 之后的 `Store` 实例对象关系图：先大致有个印象。
 ![new Vuex.Store之后的 Store 实例对象关系图](./images/vuex-store.instance.png)
 
 ```js
@@ -380,7 +380,7 @@ resetStoreVM(this, state)
 plugins.forEach(plugin => plugin(this))
 ```
 
-插件：把实例store传给插件函数，执行所有插件。
+插件：把实例对象 `store` 传给插件函数，执行所有插件。
 
 ```js
 const useDevtools = options.devtools !== undefined ? options.devtools : Vue.config.devtools
@@ -1358,7 +1358,6 @@ git clone https://github.com/lxchuan12/vuex-analysis.git
 [面试官问：能否模拟实现JS的call和apply方法](https://juejin.im/post/5bf6c79bf265da6142738b29)<br>
 [面试官问：能否模拟实现JS的bind方法](https://juejin.im/post/5bec4183f265da616b1044d7)<br>
 [面试官问：能否模拟实现JS的new操作符](https://juejin.im/post/5bde7c926fb9a049f66b8b52)<br>
-[前端使用puppeteer 爬虫生成《React.js 小书》PDF并合并](https://juejin.im/post/5b86732451882542af1c8082)
 
 ## 关于
 
