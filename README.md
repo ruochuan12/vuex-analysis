@@ -10,10 +10,11 @@
 >3.[学习 lodash 源码整体架构，打造属于自己的函数式编程类库](https://juejin.im/post/5d767e1d6fb9a06b032025ea)<br>
 >4.[学习 sentry 源码整体架构，打造属于自己的前端异常监控SDK](https://juejin.im/post/5dba5a39e51d452a2378348a)<br>
 
-感兴趣的读者可以点击阅读。
+感兴趣的读者可以点击阅读。下一篇可能是学习 `axios` 源码。
 
-TODO:
 **导读**<br>
+文章比较详细的介绍了`vuex`、`vue`源码调试方法和 `Vuex` 原理。并且详细介绍了 `Vuex.use` 安装和 `new Vuex.Store` 初始化、`Vuex.Store` 的全部`API`（如`dispatch`、`commit`等）的实现和辅助函数 `mapState`、`mapGetters`、 `mapActions`、`mapMutations`
+`createNamespacedHelpers`。
 
 ## chrome 浏览器调试 vuex 源码方法
 
@@ -23,7 +24,6 @@ TODO:
 `git clone https://github.com/lxchuan12/vuex-analysis.git`
 >
 >其中文件夹`vuex`，是克隆官方的`vuex`仓库 `dev`分支。<br>
-TODO:  修改时间和`commit`<br>
 >截至目前（2019年11月），版本是`v3.1.2`，最后一次`commit`是`ba2ff3a3`，`2019-11-11 11:51 Ben Hutton`。<br>
 >包含笔者的注释，便于理解。<br>
 
@@ -68,6 +68,7 @@ cd vue
 npm i
 # 在 dist/vue.js 最后一行追加一行 //# sourceMappingURL=vue.js.map
 npm run dev
+# 新终端窗口
 # 根目录下 全局安装http-server(一行命令启动服务的工具)
 npm i -g http-server
 hs -p 8100
@@ -201,7 +202,7 @@ function initUse (Vue) {
       plugin.install.apply(plugin, args);
     } else if (typeof plugin === 'function') {
       // 如果插件是函数,则调用它
-      // apply(null) 严格模式下plugin插件函数的this就是null
+      // apply(null) 严格模式下 plugin 插件函数的 this 就是 null
       plugin.apply(null, args);
     }
     // 添加到已安装的插件
@@ -526,6 +527,8 @@ function installModule (store, rootState, path, module, hot) {
 }
 ```
 
+#### 注册 state
+
 ```js
 // set state
 // 不是根模块且不是热重载
@@ -722,11 +725,11 @@ module.forEachChild((child, key) => {
 })
 ```
 
-这个函数
-
-TODO: 画图
-
 ### resetStoreVM 函数
+
+`resetStoreVM(this, state, hot)`<br>
+>初始化 `store._vm` 响应式的<br>
+>并且注册 `_wrappedGetters` 作为 `computed` 的属性<br>
 
 ```js
 function resetStoreVM (store, state, hot) {
@@ -810,9 +813,7 @@ function resetStoreVM (store, state, hot) {
 }
 ```
 
-TODO: 画图
-
-构造函数源代码看完了，接下来看 `Vuex.Store` 的 一些 `API` 实现。
+到此，构造函数源代码看完了，接下来看 `Vuex.Store` 的 一些 `API` 实现。
 
 ## Vuex.Store 实例方法
 
@@ -1050,23 +1051,278 @@ hotUpdate (newOptions) {
 
 ## 组件绑定的辅助函数
 
+文件路径：`vuex/src/helpers.js`
+
 ### mapState
 
 为组件创建计算属性以返回 `Vuex store` 中的状态。
+
+```js
+export const mapState = normalizeNamespace((namespace, states) => {
+  const res = {}
+  // 非生产环境 判断参数 states  必须是数组或者是对象
+  if (process.env.NODE_ENV !== 'production' && !isValidMap(states)) {
+    console.error('[vuex] mapState: mapper parameter must be either an Array or an Object')
+  }
+  normalizeMap(states).forEach(({ key, val }) => {
+    res[key] = function mappedState () {
+      let state = this.$store.state
+      let getters = this.$store.getters
+      // 传了参数 namespace
+      if (namespace) {
+        // 用 namespace 从 store 中找一个模块。
+        const module = getModuleByNamespace(this.$store, 'mapState', namespace)
+        if (!module) {
+          return
+        }
+        state = module.context.state
+        getters = module.context.getters
+      }
+      return typeof val === 'function'
+        ? val.call(this, state, getters)
+        : state[val]
+    }
+    // 标记为 vuex 方便在 devtools 显示
+    // mark vuex getter for devtools
+    res[key].vuex = true
+  })
+  return res
+})
+```
+
+normalizeNamespace 标准化统一命名空间
+
+```js
+function normalizeNamespace (fn) {
+  return (namespace, map) => {
+    // 命名空间没传，交换参数，namespace 为空字符串
+    if (typeof namespace !== 'string') {
+      map = namespace
+      namespace = ''
+    } else if (namespace.charAt(namespace.length - 1) !== '/') {
+      // 如果是字符串，最后一个字符不是 / 添加 /
+      // 因为 _modulesNamespaceMap 存储的是这样的结构。
+      /**
+       * _modulesNamespaceMap:
+          cart/: {}
+          products/: {}
+        }
+       * */
+      namespace += '/'
+    }
+    return fn(namespace, map)
+  }
+}
+```
+
+```js
+// 校验是否是map 是数组或者是对象。
+function isValidMap (map) {
+  return Array.isArray(map) || isObject(map)
+}
+```
+
+```js
+/**
+ * Normalize the map
+ * 标准化统一 map，最终返回的是数组
+ * normalizeMap([1, 2, 3]) => [ { key: 1, val: 1 }, { key: 2, val: 2 }, { key: 3, val: 3 } ]
+ * normalizeMap({a: 1, b: 2, c: 3}) => [ { key: 'a', val: 1 }, { key: 'b', val: 2 }, { key: 'c', val: 3 } ]
+ * @param {Array|Object} map
+ * @return {Object}
+ */
+function normalizeMap (map) {
+  if (!isValidMap(map)) {
+    return []
+  }
+  return Array.isArray(map)
+    ? map.map(key => ({ key, val: key }))
+    : Object.keys(map).map(key => ({ key, val: map[key] }))
+}
+```
+
+`module.context`  这个赋值主要是给 `helpers` 中 `mapState`、`mapGetters`、`mapMutations`、`mapActions`四个辅助函数使用的。
+
+```js
+// 在构造函数中 installModule 中
+const local = module.context = makeLocalContext(store, namespace, path)
+```
+
+这里就是抹平差异，不用用户传递命名空间，获取到对应的 commit、dispatch、state、和 getters
+
+getModuleByNamespace
+
+```js
+function getModuleByNamespace (store, helper, namespace) {
+  // _modulesNamespaceMap 这个变量在 class Store installModule 函数中赋值的
+  const module = store._modulesNamespaceMap[namespace]
+  if (process.env.NODE_ENV !== 'production' && !module) {
+    console.error(`[vuex] module namespace not found in ${helper}(): ${namespace}`)
+  }
+  return module
+}
+```
+
+看完这些，最后举个例子：
+`vuex/examples/shopping-cart/components/ShoppingCart.vue`
+
+```js
+computed: {
+    ...mapState({
+      checkoutStatus: state => state.cart.checkoutStatus
+    }),
+}
+```
+
+没有命名空间的情况下，最终会转换成这样
+
+```js
+computed: {
+    checkoutStatus: this.$store.state.checkoutStatus
+}
+```
+
+假设有命名空间'ruochuan'，
+
+```js
+computed: {
+    ...mapState('ruochuan', {
+      checkoutStatus: state => state.cart.checkoutStatus
+    }),
+}
+```
+
+则会转换成：
+
+```js
+computed: {
+    checkoutStatus: this.$store._modulesNamespaceMap.['ruochuan/'].context.checkoutStatus
+}
+```
 
 ### mapGetters
 
 为组件创建计算属性以返回 `getter` 的返回值。
 
+```js
+export const mapGetters = normalizeNamespace((namespace, getters) => {
+  const res = {}
+  // 省略代码：非生产环境 判断参数 getters 必须是数组或者是对象
+  normalizeMap(getters).forEach(({ key, val }) => {
+    // The namespace has been mutated by normalizeNamespace
+    val = namespace + val
+    res[key] = function mappedGetter () {
+      if (namespace && !getModuleByNamespace(this.$store, 'mapGetters', namespace)) {
+        return
+      }
+      // 省略代码：匹配不到 getter
+      return this.$store.getters[val]
+    }
+    // mark vuex getter for devtools
+    res[key].vuex = true
+  })
+  return res
+})
+```
+
+举例：
+
+```js
+computed: {
+  ...mapGetters('cart', {
+    products: 'cartProducts',
+    total: 'cartTotalPrice'
+  })
+},
+```
+
+最终转换成：
+
+```js
+computed: {
+  products: this.$store.getters['cart/cartProducts'],
+  total: this.$store.getters['cart/cartTotalPrice'],
+}
+```
+
 ### mapActions
 
 创建组件方法分发 `action`。
 
+```js
+export const mapActions = normalizeNamespace((namespace, actions) => {
+  const res = {}
+  // 省略代码： 非生产环境 判断参数 actions  必须是数组或者是对象
+  normalizeMap(actions).forEach(({ key, val }) => {
+    res[key] = function mappedAction (...args) {
+      // get dispatch function from store
+      let dispatch = this.$store.dispatch
+      if (namespace) {
+        const module = getModuleByNamespace(this.$store, 'mapActions', namespace)
+        if (!module) {
+          return
+        }
+        dispatch = module.context.dispatch
+      }
+      return typeof val === 'function'
+        ? val.apply(this, [dispatch].concat(args))
+        : dispatch.apply(this.$store, [val].concat(args))
+    }
+  })
+  return res
+})
+```
+
 ### mapMutations
 
 创建组件方法提交 `mutation`。
+mapMutations 和 mapActions 类似，只是 dispatch 换成了 commit。
+
+```js
+let commit = this.$store.commit
+commit = module.context.commit
+return typeof val === 'function'
+        ? val.apply(this, [commit].concat(args))
+        : commit.apply(this.$store, [val].concat(args))
+```
 
 [vuex/src/helpers](https://github.com/lxchuan12/vuex-analysis/blob/master/vuex/src/helpers.js)
+
+`mapMutations`、`mapActions` 举例：
+
+```js
+{
+  methods: {
+    ...mapMutations(['inc']),
+    ...mapMutations('ruochuan', ['dec']),
+    ...mapActions(['actionA'])
+    ...mapActions('ruochuan', ['actionB'])
+  }
+}
+```
+
+最终转换成
+
+```js
+{
+  methods: {
+    inc(...args){
+      return this.$store.dispatch.apply(this.$store, ['inc'].concat(args))
+    },
+    dec(...args){
+      return this.$store._modulesNamespaceMap.['ruochuan/'].context.dispatch.apply(this.$store, ['dec'].concat(args))
+    },
+    actionA(...args){
+      return this.$store.commit.apply(this.$store, ['actionA'].concat(args))
+    }
+    actionB(...args){
+      return this.$store._modulesNamespaceMap.['ruochuan/'].context.commit.apply(this.$store, ['actionB'].concat(args))
+    }
+  }
+}
+```
+
+由此可见：这些辅助函数极大地方便了开发者。
 
 ### createNamespacedHelpers
 
@@ -1082,6 +1338,8 @@ export const createNamespacedHelpers = (namespace) => ({
 })
 ```
 
+就是把这些辅助函数放在一个对象中。
+
 ## 插件
 
 插件部分文件路径是：<br>
@@ -1092,9 +1350,20 @@ export const createNamespacedHelpers = (namespace) => ({
 
 ## 总结
 
-文章注释，在源码里都有注释分析。再次强烈建议要克隆代码下来，断点调试。
+文章比较详细的介绍了`vuex`、`vue`源码调试方法和 `Vuex` 原理。并且详细介绍了 `Vuex.use` 安装和 `new Vuex.Store` 初始化、`Vuex.Store` 的全部`API`（如`dispatch`、`commit`等）的实现和辅助函数 `mapState`、`mapGetters`、 `mapActions`、`mapMutations`
+`createNamespacedHelpers`。
 
-如果读者发现有不妥或可改善之处，再或者哪里没写明白的地方，欢迎评论指出。另外觉得写得不错，对您有些许帮助，可以点赞、评论、转发分享，也是对笔者的一种支持。万分感谢。
+文章注释，在源码里基本都有注释分析。再次强烈建议要克隆代码下来。
+
+```bash
+git clone https://github.com/lxchuan12/vuex-analysis.git
+```
+
+先把 `Store` 实例打印出来，看具体结构，再结合实例断点调试，事半功倍。
+
+`Vuex` 源码相对不多，打包后一千多行，非常值得学习，也比较容易看完。
+
+如果读者发现有不妥或可改善之处，再或者哪里没写明白的地方，欢迎评论指出。另外觉得写得不错，对您有些许帮助，可以点赞、评论、转发分享，也是对笔者的一种支持，万分感谢。
 
 ## 推荐阅读
 
@@ -1130,7 +1399,7 @@ export const createNamespacedHelpers = (namespace) => ({
 [知乎前端视野专栏](https://zhuanlan.zhihu.com/lxchuan12)，欢迎关注~<br>
 [github blog](https://github.com/lxchuan12/blog)，相关源码和资源都放在这里，求个`star`^_^~
 
-## 微信公众号  若川视野
+## 欢迎加微信交流 微信公众号
 
 可能比较有趣的微信公众号，长按扫码关注。也可以加微信 `lxchuan12`，注明来源，拉您进【前端视野交流群】。
 
