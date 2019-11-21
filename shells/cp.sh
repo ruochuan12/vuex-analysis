@@ -62,6 +62,7 @@ git status
 git add docs/vuex
 git commit -m "update: docs/vuex 同步 vuex-analysis :construction:"
 git push
+git status
 
 
 echo
